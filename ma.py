@@ -1,3 +1,5 @@
+import re
+
 # Step 1
 # Read input program TODO: Implement REPL
 
@@ -5,42 +7,31 @@
 # Parse Input (Adapted from lis.py)
 
 
-def parse(program):
-    return read_from_tokens(tokenize(program))
+def parse(form):
+    # This has potential to turn into a monstrosity
+    tokens = re.findall(r"[\(\)\"\+]|\w+", form)
 
-
-def tokenize(s):
-    "Convert a string into a list of tokens."
-    return s.replace('(', ' ( ').replace(')', ' ) ').split()
-
-
-def read_from_tokens(tokens):
-    "Read an expression from a sequence of tokens."
-    if len(tokens) == 0:
-        raise SyntaxError('unexpected EOF while reading')
-    token = tokens.pop(0)
-    if '(' == token:
-        L = []
-        while tokens[0] != ')':
-            L.append(read_from_tokens(tokens))
-        tokens.pop(0)  # pop off ')'
-        print("Tokens:", L)
-        return L
-    elif ')' == token:
-        raise SyntaxError('unexpected )')
-    else:
-        return atom(token)
-
-
-def atom(token):
-    "Numbers become numbers; every other token is a symbol."
-    try:
-        return int(token)
-    except ValueError:
-        try:
-            return float(token)
-        except ValueError:
-            return str(token)
+    def req(index):
+        result = []
+        token = tokens[index]
+        while token != ")":
+            if token == "(":
+                subtree, index = req(index + 1)
+                result.append(subtree)
+            else:
+                # If the token is an integer, make it one
+                try:
+                    token = int(token)
+                except ValueError:
+                    try:
+                        token = float(token)
+                    except ValueError:
+                        token = str(token)
+                result.append(token)
+            index += 1
+            token = tokens[index]
+        return result, index
+    return req(1)[0]
 
 # Step 3
 # Evaluate
