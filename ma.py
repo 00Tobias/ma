@@ -4,12 +4,15 @@ import re
 # Read input program TODO: Implement REPL
 
 # Step 2
-# Parse Input (Adapted from lis.py)
+# Parse Input
 
 
 def parse(form):
-    # This has potential to turn into a monstrosity
-    tokens = re.findall(r"[\(\)\"\+]|\w+", form)
+    # Match parenthesis and non-alpha-numeric tokens,
+    # then treat substrings with '"' as literal strings,
+    # and lastly match every other alphanumeric token.
+    tokens = re.findall(r'[\(\)\+]|\"(?:[^\"\\]|\\[\s\S])*\"|\w+', form)
+    print("Tokens:", tokens)
 
     def req(index):
         result = []
@@ -19,6 +22,9 @@ def parse(form):
                 subtree, index = req(index + 1)
                 result.append(subtree)
             else:
+                # If the token is a string, remove the surrounding quotes
+                if "\"" in token:
+                    token = token[1:-1]
                 # If the token is an integer, make it one
                 try:
                     token = int(token)
@@ -42,8 +48,7 @@ symbols = {
     "-": "reduce(op.sub, args)",           # Subract every value from a list
     "def": "def",                          # Assign a name to something
     "fn": "def name arguments:\n body\n",  # Function definition
-    # Simply evaluates a string as python code
-    "py": "eval(args)",
+    "py": "eval(args[0])",                 # Evaluates a string as python code
 }
 
 
@@ -96,9 +101,10 @@ def replace_nested_expression(expression, expressionPath, returnValue):
 # Print results and loop
 
 
-inputs = ['(+ 1 (+ 2 (+ 3 3) (+ 4 4)))']
-# """(py "print('Hello World!')")"""
-# input = "(+ 1 (+ 2 (+ 3 3) (+ 4 4)))"
+inputs = ['(+ 1 (+ 2 (+ 3 3) (+ 4 4)))',
+          """(py "print('Hello World!')")""",
+          """(py "1 + 1")""", ]
+
 for input in inputs:
     print("Input was: ", input)
     print("Result was:", evaluate(parse(input)))
